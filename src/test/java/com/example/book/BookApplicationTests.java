@@ -1,4 +1,4 @@
-package com.example.uml;
+package com.example.book;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -7,7 +7,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class UmlApplicationTests {
+public class BookApplicationTests {
 
     @Test
     public void contextLoads() {
