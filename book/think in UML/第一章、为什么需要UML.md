@@ -20,7 +20,7 @@
 1.  边界类：分界线
 2. 实体类：与现实对应
 ### 1.2.5、 从概念模型到设计模型
-![avatar](./img/建模过程.png)
+![avatar](img/建模过程.png)
 
 ## 1.3、统一过程简介
 ### 1.3.1、RUP是什么（Rational Unified Process)
