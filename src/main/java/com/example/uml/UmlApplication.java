@@ -1,4 +1,4 @@
-package com.example.uml;
+/*package com.example.uml;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -10,5 +10,5 @@ public class UmlApplication {
 		SpringApplication.run(UmlApplication.class, args);
 	}
 
-}
+}*/
 
