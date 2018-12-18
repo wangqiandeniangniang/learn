@@ -1,4 +1,4 @@
-package com.example.javaServer;/*
+package com.example.javaServer.thread;/*
  * @Author Administrator
  * @Description 公平锁
  * @Date 2018/12/15/015
