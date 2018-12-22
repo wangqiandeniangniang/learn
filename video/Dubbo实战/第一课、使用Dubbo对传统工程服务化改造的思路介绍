@@ -1,0 +1,23 @@
+> 启动实例项目
+## 1、学习配置druid密码连接
+学习地址
+[druid 密码设置][1]
+例如：
+
+![druid加密](img/druid加密.png)
+
+## 2、 改造之后Dubbo服务调用方式后的工程结构
+edu-common-parent (Maven父配置)
+edu-facade-user(用户服务接口)
+edu-service-user(用户服务实现)
+edu-web-boss(服务消费者)
+
+## 3、部署环境规划
+以下单独部署
+- edu-web-boss(consumer) 单独的服务器
+- zookeeper-3.4.6(注册中心)
+- edu-service-user(provider)
+- MySql5.6 (数据库)
+
+[1]:http://www.cnblogs.com/xiaohu1218/p/7791986.html/ "druid密码设置"
+
