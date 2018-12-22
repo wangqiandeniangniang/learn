@@ -8,3 +8,46 @@
     效率
     - 信号驱动IO- 当数据就绪时，生成SIGIO信号
     - 异步IO- 当内核完成某个操作时（将数据从内核拷贝到用户缓存区之后），发出通知。
+## 2、Java NIO是基于epoll开发的非阻塞式IO
+    - 支持打开的socket数量仅受到操作系统最大文件句柄数量限制：传统的select/poll方式的最大句柄数量为1024，如果需要改变，则需要修改
+    FD_SETSIZE重新编译内核
+    - Select/epoll采用回调方式而不是顺序轮询，对于大多数连接不活动的情况下，效率远远高于select/poll方式，不会随着fd的数量增加而较大的效率下降
+    - Select/poll /epoll都是需要将内核将消息通知用户控件，需要进行内核和用户空间的内存复制，epoll采用mmap方式进行内核和用户空间的内存共享
+    - NIO 2。0 开始支持基于事件驱动的IO方式
+    - 基于epoll的实现可能会出现空轮询以至于CPU飙升到100%
+## 3、 服务器端编程常见瓶颈
+- 用户连接请求
+    - 如果是TCP， 由于有连接请求，需要等待连接进入（accept） ，通过多线程处理
+    - 如果是UDP， 不需要
+    - Netty通过NioEventLoopGroup 引入了对accept线程池的支持
+- TCP、UDP连接后线程处理
+    - 通过多线程/线程池的组合提高系统的响应速度
+    - 要注意不要随意在input处理中引入额外的线程
+- 业务逻辑的多线程处理
+    - 这部分是akka/disruptor/kafka这类库、框架的用武之地，而netty/mina则是在前面两点提供了高性能的支持
+    - 业务逻辑尤其是和第三方后台打交道的业务逻辑并不是通过一个线程就可以额提高效率的尤其是习惯编写java web应用的程序员需要注意
+
+- 数据库
+    - 通过slave/master、连接池等多种手段进行优化
+## 4、Netty的优势
+    - 使用更高效的socket底层
+    - 对epoll空轮询引起的CPU占用飙升在内部进行处理，避免程序直接使用NIO的陷阱
+    - 采用多个decoder/encoder支持，对于粘包/分包进行自动化处理
+    - 可使用接受/处理线程池，提高连接效率
+    - 对重连、心跳检测的简单支持
+    - 对于Protocol buffer 以及java serialization 协议编解码的直接支持
+    - 简化NIO的处理方式
+
+## 5、Netty的核心在于整个的channel pipeline
+    - Pipeline是一个队列，但是包含了两种处理器，一种是ChannelInboundHandlerAdapter,一种是ChannelOutboundHandlerAdapter
+    - ChannelInboundHandlerAdapter负责处理进入ByteBuf或者其他内容
+    - ChannelOutboundHandlerAdapter负责处理输出的ByteBuff或其他内容
+    - Pipeline 是一个ChannelHandler的队列
+        - 输入时， 按照从头直尾的顺序， 遍历所有的ChannelInboundHandler
+        - 在输出时，按照从尾至头的顺序，遍历所有的ChannelOutboundHanlder
+    - 两个NioEventLoopGroup分别创建两个线程池，负责accept和read
+    - DelimiterBasedFrameDecoder, LineBasedFrameDecoder, FixedLengthFrameDecoder和lengthFieldBasedFrameDecoder分别代表：
+        - 分隔标记的消息组
+        - 换行符标记的消息组（特殊分隔符）
+        - 固定长度消息组
+        - 长度开始的消息组
