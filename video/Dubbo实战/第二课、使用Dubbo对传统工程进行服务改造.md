@@ -5,12 +5,15 @@
 
 ## 2、迁移代码
 - edu-facade-user: facade接口和web工程以及服务工程需要引用的 【实体、常量、枚举类、工具类、以及异常类】
+
 ![迁移代码](img/facade_迁移代码.png)
 
 - edu-service-user: 业务实现和dao层
+
 ![迁移代码](img/edu-service-user_迁移代码.png)
 
 - edu-web-boss : 展示层和视图层需要的类
+
 ![迁移代码](img/edu-web-boss_迁移代码.png)
 
 ## 3、迁移资源配置文件
@@ -18,9 +21,11 @@
 - edu-facade-user: 没有
 
 - edu-service-user: 与数据库交互的mybatis、 spring相关的、jdbc、log4j、以及webapp中 web.xml(为了方便在tomcat启动应用)
+
 ![迁移代码](img/edu-service-user_迁移资源.png)
 
 - edu-web-boss : spring配置文件，前端相关框架struts， log4j、 webapp中的资源，html、js、css等等
+
 ![迁移代码](img/edu-web-boss_迁移资源.png)
 
 ## 4、需要新增地方
