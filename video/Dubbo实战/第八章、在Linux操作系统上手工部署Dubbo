@@ -1,0 +1,44 @@
+## 1、步骤
+### 1.1、 环境变量配置
+  - Java环境变量---只需要JRE
+  vim /etc/profile
+````shell
+export JAVA_HOME=/usr/java/jdk1.7.0_80
+export JRE_HOME=$JAVA_HOME/jre
+export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/li/tools.jar:$JRE_HOME/lib/rt.jar
+export PATH=$PATH:$JAVA_HOME/bin:$JRE_HOME/bin
+````
+
+### 1.2、部署目录规范
+![目录规范](img/ch8/目录规范.png)
+
+- edu (主要目的)
+    - app (部署APP应用)
+        - app1
+        - app2
+    - service （部署服务）
+        - account 账户
+        - operation 操作
+        - order 订单
+        - queue
+        - user
+            - lib (依赖jar)
+            - edu-service-user.jar 工程打包的jar
+            - service-user.sh user启动脚本
+    - timer 定时任务
+        - report 报告
+    - web web(应用)
+        - gateway ()
+        - operation
+        - portal
+
+### 1.3、手工维护Dubbo服务
+````shell
+java -jar edu-service-xxx.jar &      ## & 表示守护进程
+kill PID   优雅关机
+kill -9 PID  强制关机
+````
+
+### 1.4、自定义Dubbo服务维护的Shell脚本
+
+### 1.5、服务维护注意事项
