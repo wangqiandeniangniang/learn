@@ -115,6 +115,243 @@ cd FastDFS
 - FastDFS和mogileFS对比
 ![fastDFS_mogileFS](img/ch23/fastDFS_mogileFS.jpg)
 
+
+
+
+
+
 ## 参考网站
 - [FastDFS中文](http://www.csource.org/,"")
 - [FastDFS英文](http://code.google.com/p/fastdfs/,"")
+---
+
+# FastDFS分布式文件系统的安装与使用
+>跟踪服务器： 192.168.230.135 (edu-dfs-tracker-01)<br/>
+存储服务器：192.168.230.136 （edu-dfs-storage-01）<br/>
+环境：CentOS 7.0 <br/>
+用户： root <br/>
+数据目录: /fastdfs （注：数据目录按照你的数据盘挂载路径而定）<br/>
+安装包： <br/>
+FastDFS v5.05 <br/>
+libfastcommon-master.zip (是从FastDFS和FastDHT中提取出来的公共C函数库)<br>
+fastdfs-nginx-module_v1.16.tar.gz : nginx模块插件 <br/>
+nginx-1.6.2.tar.gz : nginx版本 <br/>
+fastdfs_client-java._v1.25.tar.gz: fastdfs客户端 <br/>
+源码地址： https://github.com/happyfish100/ <br/>
+下载地址：http://sourceforge.net/projects/fastdfs/files/ <br/>
+官方论坛：http://bbs.chinaunix.net/forum-240-1.html <br/>
+
+## 1 所有跟踪服务器和存储服务器均执行如下操作
+### 1.1、编译和安装所需的依赖包
+````
+# yum install make cmake gcc gcc-c++
+
+````
+### 1.2、安装libfastcommon:
+#### 1.2.1、上传或下载libfastcommon-master.zip 到 /usr/local/src目录
+#### 1.2.2、解压
+````
+# cd /usr/local/src/
+# unzip libfastcommon-master.zip
+# cd libfastcommon-master
+````
+#### 1.2.3、编译、安装
+````
+# ./make.sh
+# ./make.sh install
+libfastcommon 默认安装到了
+/usr/lib64/libfastcommon.so
+````
+
+#### 1.2.4、因为FastDFS主程序设置的lib目录是/usr/local/lib, 所以需要创建软链接
+````
+# ln -s /usr/lib64/libfastcommon.so /usr/local/lib/libfastcommon.so
+# ln -s /usr/lib64/libfastcommon.so /usr/local/libfastcommon.so
+````
+### 1.3、安装FastDFS
+#### 1.3.1、上传或下载FastDFS源码包(FastDFS_v5.05.tar.gz) 到 /usr/local/src目录
+#### 1.3.2、解压
+````
+# cd /usr/local/src/
+# tar -zxvf FastDFS_v5.05.tar.gz
+# cd FastDFS
+````
+#### 1.3.3、编译、安装（编译前要确保已经成功安装了libfastcommon）
+````
+# ./make.sh
+# ./make.sh intall
+采用默认安装的方式安装、安装后的相应文件与目录
+A 、服务脚本在
+    /etc/init.d/fasts_storaged
+    /etc/init.d/fast_tracker
+B、配置文件在（样例配置文件）
+    /etc/fdfs/client.conf.sample
+    /etc/fdfs/storage.conf.sample
+    /etc/fdfs/tracker.conf.sample
+C、命令工具在/usr/bin/目录下的
+
+````
+#### 1.3.4、因为FastDFS服务脚本设置的bin目录是/usr/local/bin, 但是实际上命令安装在/usr/bin,可以进入/usr/bin命令使用一下命令查看fdfs的相关命令
+````
+# cd /usr/bin/
+# ls | grep fdfs
+
+因此需要修改FastDFS服务脚本中相应的命令路径，也就是把/etc/init.d/fdfs_storaged和/etc/init.d/fdfs_tracker两个脚本中的
+/usr/local/bin修改成/usr/bin;
+# vi fdfs_trackerd
+使用查询替换命令统一修改 :%s+/usr/local/bin+/usr/bin
+
+# vi fdfs_storaged
+使用查找命令替换进行统一修改  :%s+/usr/local/bin+/usr/bin
+````
+## 2、配置FastDFS跟踪器(192.168.230.135)
+### 2.1、复制FastDFS跟踪样例配置文件，并重命名
+````
+# cd /etc/fdfs/
+
+# cp tracker.conf.sample tracker.conf
+````
+### 2.2、编辑跟踪器配置如下
+````
+# vi /etc/fdfs/tracker.conf
+修改的内容如下
+disabled=false
+port=22122
+base_path=/fastdfs/tracker
+````
+### 2.3、创建基础数据目录(参考基础目录base_path配置)
+````
+# mkdir -p /fastdfs/tracker
+````
+### 2.4、防火墙中打开跟踪器端口(默认为22122)
+````
+# vi /etc/sysconfig/iptables
+添加如下端口行：
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 22122 -j ACCEPT
+
+重启防火墙
+# service iptables restart
+````
+### 2.5、启动Tracker
+````
+# /etc/init.d/fdfs_trackerd start
+（初次成功启动，会在fastdfs/tracker目录下创建data 、logs 两个目录）
+查看 FastDFS Tracker是否已成功启动：
+# ps -ef | grep fdfs
+````
+### 2.6、关闭Tracker
+````
+# /etc/init.d/fdfs_trackerd stop
+````
+### 2.7、设置FastDFS跟踪器开机启动：
+````
+# vi /etc/rc.d/rc.local
+添加一下内容：
+## FastDFS Tracker
+/etc/init.d/fdfs_trackerd start
+
+````
+## 3 配置FastDFS存储（192.168.230.136）
+### 3.1、复制FastDFS存储器样例配置文件，并重名：
+````
+# cd /etc/fdfs/
+
+# cp storage.conf.sample storage.conf
+````
+### 3.2、编辑存储器样例配置文件：
+````
+# vi /etc/fdfs/storage.conf
+修改的内容如下：
+disabled=false
+port=23000
+base_path=/fastdfs/storage
+store_path0=/fastdfs/storage
+tracker_server=192.168.230.135:22122
+http.server_port=8888
+````
+### 3.3、创建基础数据目录（参考基础目录base_path配置）
+````
+# mkdir -p /fastdfs/storage
+````
+### 3.4、防火墙中打开存储端口(默认为23000)
+````
+# vi /etc/sysconfig/iptables
+添加如下端口信息
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 23000 -j ACCEPT
+重启防火墙
+# service iptables restart
+````
+
+## 3.5、启动Storage
+````
+# /etc/init.d/fdfs_storaged start
+(初次成功启动，会在/fastdfs/storage目录下创建data、logs两个目录)
+
+查看FastDFS Storage是否已成功启动
+# ps -ef |grep fdfs
+````
+## 3.6、关闭storage
+````
+# /etc/init.d/fdfs_storaged stop
+````
+## 3.7、设置FastDFS存储开机启动
+````
+# vi /etc/rc.d/rc.local
+添加
+## FastDFS storage
+/etc/init.d/fdfs_storaged start
+````
+
+# 4、文件上传测试(192.168.230.135)
+## 4.1、修改Tracker 服务器中的客户端配置文件:
+````
+# cp /etc/fdfs/client.conf.sample /etc/fdfs/client.conf
+# vi /etc/fdfs/client.conf
+
+base_path=/fastdfs/tracker
+tracker_server=192.168.230.135:22122
+````
+## 4.2、执行如下文件上传命令
+````
+# /usr/bin/fdfs_upload_file /etc/fdfs/client.conf /usr/local/src/FastDFS_v5.05.tar.gz
+返回ID号：
+group1/M00/00/00/werewrrwewEEsswaeaeawwwfww.tar.gz  (上传成功)
+````
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
