@@ -317,8 +317,96 @@ tracker_server=192.168.230.135:22122
 返回ID号：
 group1/M00/00/00/werewrrwewEEsswaeaeawwwfww.tar.gz  (上传成功)
 ````
+# 6、在每个存储节点上安装Nginx
+## 6.1、fastdfs-nginx-module作用说明
+> FastDFS通过Tracker服务器，将文件放在Storage服务器存储，但是同组存储服务器之间需要进入文件复制，有同步延迟的问题，假设Tracker服务器将文件
+上传了192.168.4.125， 上传成功后文件ID已经返回给客户端，此时FastDFS存储集群机制将这个文件同步到同组存储19.168.4.126，在文件还没有复制完成的情况下，客户端如果用这个文件ID
+在192.168.4.126上取文件，就会出现文件无法访问的错误。而FastDfs-nginx-module可以重定向连接到源服务器文件，避免客户端由于复制延迟导致的文件无法访问的错误。
 
+## 6.2、上传fastdfs-nginx-module_v1.16.tar.gz到 /usr/local/src
 
+## 6.3、解压
+````
+# cd /usr/local/src/
+# tar -zxvf fastdfs-nginx-module_v1.16.tar.gz
+````
+
+## 6.4、修改fastdfs-nginx-module的config配置文件
+````
+# cd fastdfs-nginx-module/src
+# vi config
+CORE_INCS="$CORE_INCS /usr/local/include/fastdfs /usr/local/include/fastcommon/"
+修改为：
+CORE_INCS="$CORE_INCS /usr/include/fastdfs /usr/include/fastcommon/"
+（注意：这个路径修改很重要的，不然在nginx编译的时候会报错的）
+````
+
+## 6.5、上传当前的稳定版Nginx（nginx-1.6.2.tar.gz） 到/usr/local/src目录
+
+## 6.6、安装编译Nginx所需要的依赖包
+````
+# yum install gcc gcc-c++ make automake autoconf libtool pcre* zlib openssl openssl-devel
+````
+## 6.7、编译安装Nginx（添加fastdfs-nginx-module模块）
+````
+# cd /usr/local/src/
+# tar -zxvf nginx-1.6.2.tar.gz
+# cd nginx-1.6.2
+# ./configure --add-module=/usr/local/src/fastdfs-nginx-module/src
+# make && make install
+````
+## 6.8、复制fastdfs-nginx-module源码中的配置文件到/etc/fdfs目录，修改
+````
+# cp /usr/local/src/fastdfs-nginx-module/src/mod_fastdfs.conf /etc/fdfs/
+
+# vi /etc/fdfs/mod_fastdfs.conf
+
+tracker_server=192.168.230.135
+url_have_group_name=true
+store_path0=/fastdfs/storage
+````
+## 6.9、复制FastDFS的部分配置文件到/etc/fdfs目录
+````
+# cd /usr/local/src/FastDFS/conf
+# cp http.conf mime.types /etc/fdfs/
+````
+## 6.10、在/fastdfs/storage文件存储目录下创建软链接， 将其链接到实际存储数据目录
+````
+# ln -s /fastdfs/storage/data/ /fastdfs/storage/data/M00
+````
+## 6.11、配置Nginx
+````
+user root;
+listen  8888;
+
+location ~/group([0-9])/M00{
+    #alias /fastdfs/storage/data;
+    ngx_fastdfs_module;
+}
+
+A、8888端口值是要与/etc/fdfs/storage.conf 中的http.server_port=8888相对应，因为http.server_port默认为8888，如果想改成80，则要对应修改过来。
+B、Storage对应多个group的情况下，访问路径带group名，如/group1/M00/00/00/xxx,对应的Nginx配置为：
+location ~/group([0-9])/M00{
+    #alias /fastdfs/storage/data;
+    ngx_fastdfs_module;
+}
+C、如查下载时如发现报404，将nginx.conf第一行 user nobody 改为 user root后重新启动
+````
+## 6.12、防火墙中打开Nginx的8888端口
+````
+# vi /etc/sysconfig/iptables
+添加
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 8888 -j ACCEPT
+# service iptables restart
+````
+
+## 6.13、启动Nginx
+````
+# /usr/local/nginx/sbin/nginx
+(重启Nginx的命令为： /usr/local/nginx/sbin/nginx -s reload)
+````
+## 6.18、通过浏览器访问测试时上传的文件
+http://192.168.230.136:8888/group1/M00/00/00/werewrrwewEEsswaeaeawwwfww.tar.gz
 
 
 
