@@ -3,7 +3,7 @@
 ## 2、测试两个IP是否通畅
 - ping 目标IP
 ## 3、 在window查看IP情况的命令是
-- ipconfig
+- ipconfig·
 ## 4、在linux/unix下查看IP情况的命令是
 - ifconfig
 ## 5、如何在vm上配置固定ip地址
