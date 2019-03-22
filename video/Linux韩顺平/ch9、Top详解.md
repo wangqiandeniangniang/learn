@@ -47,3 +47,6 @@ bin/mysqld_safe --user=mysql & [& 表示以后台的方式启动]
 如果希望在任意一个目录度可以进入mysql则需要在/root/.bash_profile中添加路径。
 
 ```
+## 5、如何使用命令行来备份和恢复mysql数据库
+备份： mysqldump -u root -p密码 数据库名 > data.bak
+恢复： mysql -u root -p密码 数据库名  < data.bak
